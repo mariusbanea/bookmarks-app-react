@@ -3,30 +3,22 @@ import { Route } from 'react-router-dom';
 import AddBookmark from './AddBookmark/AddBookmark';
 import BookmarkList from './BookmarkList/BookmarkList';
 import EditBookmark from './EditBookmark/EditBookmark';
+import BookmarksContext from './BookmarksContext'
 import Nav from './Nav/Nav';
 import config from './config';
 import './App.css';
 
-const bookmarks = [
-
-];
 
 class App extends Component {
   state = {
-    // page: 'list',
-    bookmarks,
+    bookmarks: [],
     error: null,
   };
-
-  // changePage = (page) => {
-  //   this.setState({ page })
-  // }
 
   setBookmarks = bookmarks => {
     this.setState({
       bookmarks,
       error: null,
-      // page: 'list',
     })
   }
 
@@ -35,6 +27,26 @@ class App extends Component {
       bookmarks: [ ...this.state.bookmarks, bookmark ],
     })
   }
+
+  deleteBookmark = bookmarkId => {
+    console.log(bookmarkId)
+    // todo: remove bookmark with bookmarkId from state
+    const newBookmarks = this.state.bookmarks.filter(bm =>
+      bm.id !== bookmarkId
+    )
+    this.setState({
+      bookmarks: newBookmarks
+    })
+  }
+
+  updateBookmark = updatedBookmark => {
+    this.setState({
+      bookmarks: this.state.bookmarks.map(bm =>
+        (bm.id !== updatedBookmark.id) ? bm : updatedBookmark
+      )
+    })
+  }
+
 
   componentDidMount() {
     fetch(config.API_ENDPOINT, {
@@ -55,16 +67,33 @@ class App extends Component {
   }
 
   render() {
-    const { bookmarks } = this.state
+    const contextValue = {
+      bookmarks: this.state.bookmarks,
+      addBookmark: this.addBookmark,
+      deleteBookmark: this.deleteBookmark,
+      updateBookmark: this.updateBookmark,
+    }
     return (
       <main className='App'>
         <h1>Bookmarks!</h1>
-        <Nav />
-        <div className='content' aria-live='polite'>
-          <Route path='/add-bookmark' render={({history}) => <AddBookmark onAddBookmark={this.addBookmark} onClickCancel={() => history.push('/')} />} />
-          <Route exact path='/' render={() => <BookmarkList bookmarks = {bookmarks} />} />
-          <Route path='/edit-bookmark' component={EditBookmark} />
-        </div>
+        <BookmarksContext.Provider value={contextValue}>
+          <Nav />
+          <div className='content' aria-live='polite'>
+            <Route
+              path='/add-bookmark'
+              component={AddBookmark}
+            />
+            <Route
+              exact
+              path='/'
+              component={BookmarkList}
+            />
+            <Route
+              path='/edit-bookmark'
+              component={EditBookmark}
+            />
+          </div>
+        </BookmarksContext.Provider>
       </main>
     );
   }
